@@ -1,0 +1,31 @@
+import telegram
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+import requests
+from bs4 import BeautifulSoup
+
+# Define a function to handle the /start command
+def start(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Hi! I can search for information based on keywords. Just send me a keyword and I'll do my best to find relevant information.")
+
+# Define a function to handle text messages
+def search(update, context):
+    keyword = update.message.text
+    # Use BeautifulSoup to scrape a website for information related to the keyword
+    url = f'https://www.example.com/search?q={keyword}'
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    # Extract relevant information from the website
+    result = soup.find('div', class_='result')
+    # Send the result to the user
+    context.bot.send_message(chat_id=update.effective_chat.id, text=result.get_text())
+
+# Create a Telegram bot and add the handlers
+updater = Updater(token='YOUR_TOKEN_HERE', use_context=True)
+dispatcher = updater.dispatcher
+start_handler = CommandHandler('start', start)
+search_handler = MessageHandler(Filters.text & ~Filters.command, search)
+dispatcher.add_handler(start_handler)
+dispatcher.add_handler(search_handler)
+
+# Start the bot
+updater.start_polling()
